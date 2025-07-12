@@ -14,6 +14,8 @@ export default function Home() {
     nomorWA: "",
     catatan: ""
   });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -23,15 +25,63 @@ export default function Home() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!formData.nama || !formData.nomorWA) {
       alert("Nama dan Nomor WhatsApp harus diisi.");
       return;
     }
-    const message = `Halo, saya ${formData.nama}. ${formData.catatan || "Saya ingin memesan kue dari toko Anda."}`;
-    const whatsappUrl = `https://wa.me/${formData.nomorWA.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+
+    setIsSubmitting(true);
+
+    try {
+      // Kirim data ke API terlebih dahulu
+      const response = await fetch('/api/order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nama: formData.nama,
+          nomorWA: formData.nomorWA,
+          catatan: formData.catatan || "Saya ingin memesan kue dari toko Anda.",
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || `HTTP error! status: ${response.status}`);
+      }
+
+      console.log('✅ Order submitted successfully:', result);
+
+      // Jika berhasil, baru redirect ke WhatsApp
+      const message = `Halo, saya ${formData.nama}. ${formData.catatan || "Saya ingin memesan kue dari toko Anda."}\n\nOrder ID: ${result.orderId}`;
+      const whatsappUrl = `https://wa.me/6281234567890?text=${encodeURIComponent(message)}`;
+      
+      // Reset form setelah berhasil
+      setFormData({
+        nama: "",
+        nomorWA: "",
+        catatan: ""
+      });
+
+      // Tampilkan notifikasi sukses dengan Order ID
+      alert(`Pesanan berhasil dikirim!\nOrder ID: ${result.orderId}\n\nAnda akan diarahkan ke WhatsApp.`);
+      
+      // Buka WhatsApp
+      window.open(whatsappUrl, '_blank');
+
+    } catch (error) {
+      console.error('❌ Error submitting order:', error);
+      const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan yang tidak diketahui.";
+      alert(`Terjadi kesalahan saat mengirim pesanan: ${errorMessage}\n\nSilakan coba lagi.`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const menuItems = [
@@ -355,10 +405,20 @@ export default function Home() {
               <Button 
                 type="submit"
                 size="lg"
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white py-6 text-lg rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-2xl cursor-pointer"
+                disabled={isSubmitting}
+                className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white py-6 text-lg rounded-full shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-2xl cursor-pointer disabled:cursor-not-allowed disabled:transform-none"
               >
-                <Phone className="w-5 h-5" />
-                Hubungi Kami
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Mengirim Pesanan...
+                  </>
+                ) : (
+                  <>
+                    <Phone className="w-5 h-5" />
+                    Hubungi Kami
+                  </>
+                )}
               </Button>
             </form>
           </Card>
