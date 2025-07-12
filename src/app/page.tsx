@@ -25,6 +25,10 @@ export default function Home() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.nama || !formData.nomorWA) {
+      alert("Nama dan Nomor WhatsApp harus diisi.");
+      return;
+    }
     const message = `Halo, saya ${formData.nama}. ${formData.catatan || "Saya ingin memesan kue dari toko Anda."}`;
     const whatsappUrl = `https://wa.me/${formData.nomorWA.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
