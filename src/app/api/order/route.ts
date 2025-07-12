@@ -6,12 +6,12 @@ interface OrderData {
   catatan: string;
   timestamp: string;
 }
+const orderCounters = new Map<string, number>();
 
 export async function POST(request: NextRequest) {
   try {
     const data: OrderData = await request.json();
     
-    // Validasi data yang diterima
     if (!data.nama || !data.nomorWA) {
       return NextResponse.json(
         { error: 'Nama dan nomor WhatsApp harus diisi' }, 
@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Log data pesanan untuk monitoring
     console.log('📋 New Order Received:', {
       nama: data.nama,
       nomorWA: data.nomorWA,
@@ -29,14 +28,53 @@ export async function POST(request: NextRequest) {
       ip: request.headers.get('x-forwarded-for') || request.headers.get('remote-addr') || 'unknown'
     });
 
-    // Di sini Anda bisa menambahkan logika untuk:
-    // - Menyimpan ke database
-    // - Mengirim notifikasi ke admin
-    // - Integrasi dengan sistem lain
-    // - Validasi nomor WhatsApp
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2);
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
     
-    // Generate order ID untuk tracking
-    const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    // Generate sequential order number for the day
+    const dateKey = `${year}${month}${day}`;
+    const currentCount = orderCounters.get(dateKey) || 0;
+    const newCount = currentCount + 1;
+    orderCounters.set(dateKey, newCount);
+    
+    const sequentialNum = newCount.toString().padStart(3, '0');
+    
+    const orderId = `ORD-${year}${month}${day}-${sequentialNum}`;
+
+    const webhookUrl = 'http://localhost:5678/webhook-test/919180bc-1853-47e0-8e03-9a2f87af1c68';
+    
+    try {
+      const webhookPayload = {
+        orderId: orderId,
+        nama: data.nama,
+        nomorWA: data.nomorWA,
+        catatan: data.catatan,
+        timestamp: data.timestamp,
+        source: 'artisan-bakery-website',
+        userAgent: request.headers.get('user-agent'),
+        ip: request.headers.get('x-forwarded-for') || request.headers.get('remote-addr') || 'unknown'
+      };
+
+      console.log('🔄 Sending data to webhook:', webhookUrl);
+      
+      const webhookResponse = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookPayload),
+      });
+
+      if (webhookResponse.ok) {
+        console.log('✅ Webhook sent successfully');
+      } else {
+        console.warn(`⚠️ Webhook failed with status: ${webhookResponse.status}`);
+      }
+    } catch (webhookError) {
+      console.error('❌ Error sending webhook:', webhookError);
+    }
 
     const responseData = {
       success: true,
