@@ -33,7 +33,6 @@ export async function POST(request: NextRequest) {
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     
-    // Generate sequential order number for the day
     const dateKey = `${year}${month}${day}`;
     const currentCount = orderCounters.get(dateKey) || 0;
     const newCount = currentCount + 1;
@@ -43,8 +42,14 @@ export async function POST(request: NextRequest) {
     
     const orderId = `ORD-${year}${month}${day}-${sequentialNum}`;
 
-    const webhookUrl = 'http://localhost:5678/webhook-test/919180bc-1853-47e0-8e03-9a2f87af1c68';
-    
+    const environment = process.env.ENVIRONMENT
+    var webhookUrl = '';
+    if( environment === 'development' ) {
+      webhookUrl = process.env.DEVELOPMENT_WEBHOOK_URL ?? '';
+    } else {
+      webhookUrl = process.env.PRODUCTION_WEBHOOK_URL ?? '';
+    }
+
     try {
       const webhookPayload = {
         orderId: orderId,
