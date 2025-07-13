@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Cake, Coffee, Heart, Star, Phone, MapPin, Clock, MessageCircle, Instagram, Facebook, Award, Users, ChefHat, Quote } from "lucide-react";
 
 export default function Home() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     nama: "",
     nomorWA: "",
@@ -57,10 +59,6 @@ export default function Home() {
 
       console.log('✅ Order submitted successfully:', result);
 
-      // Jika berhasil, baru redirect ke WhatsApp
-      // const message = `Halo, saya ${formData.nama}. ${formData.catatan || "Saya ingin memesan kue dari toko Anda."}\n\nOrder ID: ${result.orderId}`;
-      // const whatsappUrl = `https://wa.me/6285183241832?text=${encodeURIComponent(message)}`;
-      
       // Reset form setelah berhasil
       setFormData({
         nama: "",
@@ -68,11 +66,9 @@ export default function Home() {
         catatan: ""
       });
 
-      // Tampilkan notifikasi sukses dengan Order ID
-      alert(`Pesanan berhasil dikirim!\nOrder ID: ${result.orderId}\n\nAnda akan diarahkan ke WhatsApp.`);
-      
-      // Buka WhatsApp
-      // window.open(whatsappUrl, '_blank');
+      // Redirect ke success page dengan data order
+      const successUrl = `/success?orderId=${result.orderId}&nama=${encodeURIComponent(formData.nama)}&nomorWA=${encodeURIComponent(formData.nomorWA)}&catatan=${encodeURIComponent(formData.catatan || "Saya ingin memesan kue dari toko Anda.")}`;
+      router.push(successUrl);
 
     } catch (error) {
       console.error('❌ Error submitting order:', error);
