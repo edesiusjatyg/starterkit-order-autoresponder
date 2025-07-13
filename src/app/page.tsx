@@ -36,7 +36,6 @@ export default function Home() {
     setIsSubmitting(true);
 
     try {
-      // Kirim data ke API terlebih dahulu
       const response = await fetch('/api/order', {
         method: 'POST',
         headers: {
@@ -59,8 +58,8 @@ export default function Home() {
       console.log('✅ Order submitted successfully:', result);
 
       // Jika berhasil, baru redirect ke WhatsApp
-      const message = `Halo, saya ${formData.nama}. ${formData.catatan || "Saya ingin memesan kue dari toko Anda."}\n\nOrder ID: ${result.orderId}`;
-      const whatsappUrl = `https://wa.me/6281234567890?text=${encodeURIComponent(message)}`;
+      // const message = `Halo, saya ${formData.nama}. ${formData.catatan || "Saya ingin memesan kue dari toko Anda."}\n\nOrder ID: ${result.orderId}`;
+      // const whatsappUrl = `https://wa.me/6285183241832?text=${encodeURIComponent(message)}`;
       
       // Reset form setelah berhasil
       setFormData({
@@ -73,7 +72,7 @@ export default function Home() {
       alert(`Pesanan berhasil dikirim!\nOrder ID: ${result.orderId}\n\nAnda akan diarahkan ke WhatsApp.`);
       
       // Buka WhatsApp
-      window.open(whatsappUrl, '_blank');
+      // window.open(whatsappUrl, '_blank');
 
     } catch (error) {
       console.error('❌ Error submitting order:', error);
